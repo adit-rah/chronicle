@@ -1,0 +1,63 @@
+database:
+  path: "./data/events.db"
+
+server:
+  port: 8080
+  read_timeout: 10s
+  write_timeout: 10s
+
+sources:
+  # RSS Feed Example - Hacker News
+  - type: rss
+    name: "Hacker News"
+    enabled: true
+    interval: 15m
+    config:
+      url: "https://hnrss.org/frontpage"
+
+  # RSS Feed Example - TechCrunch
+  - type: rss
+    name: "TechCrunch"
+    enabled: true
+    interval: 30m
+    config:
+      url: "https://techcrunch.com/feed/"
+
+  # GitHub Repository Example
+  - type: github
+    name: "Go Repository"
+    enabled: true
+    interval: 10m
+    config:
+      owner: "golang"
+      repository: "go"
+      # token will be read from GITHUB_TOKEN environment variable
+
+  # Weather Example
+  - type: weather
+    name: "San Francisco Weather"
+    enabled: true
+    interval: 1h
+    config:
+      city: "San Francisco"
+      # api_key will be read from WEATHER_API_KEY environment variable
+
+  # Jobs Example - Using a hypothetical company RSS feed
+  - type: jobs
+    name: "Google Jobs"
+    enabled: false  # Disabled by default since this is just an example
+    interval: 2h
+    config:
+      company_url: "https://careers.google.com/api/v3/search/jobs?location=San Francisco&q=software engineer"
+      keywords: ["software", "engineer", "developer", "backend", "frontend"]
+      location: "San Francisco"
+
+  # More job examples (these would need real URLs)
+  - type: jobs
+    name: "Startup Jobs"
+    enabled: false
+    interval: 4h
+    config:
+      company_url: "https://example-startup.com/careers/feed"
+      keywords: ["intern", "junior", "graduate", "new grad"]
+      location: "Remote" 
