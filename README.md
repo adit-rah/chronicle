@@ -33,7 +33,7 @@ A self-hosted application that aggregates different information streams (news, G
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd event-aggregator
+   cd chronicle
    ```
 
 2. **Set up environment variables**:
@@ -244,7 +244,7 @@ make docker-stop    # Stop Docker containers
 ### Project Structure
 
 ```
-event-aggregator/
+chronicle/
 ├── cmd/server/          # Application entry point
 ├── internal/
 │   ├── api/            # HTTP handlers and routing
