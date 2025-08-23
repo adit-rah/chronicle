@@ -24,7 +24,6 @@ A self-hosted application that aggregates different information streams (news, G
 ### Frontend (React)
 - **Timeline View**: Chronological event display
 - **Real-Time Updates**: Live events via WebSocket connection
-- **Filtering**: Filter by source type, category, keywords, and time range
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Quick Start
