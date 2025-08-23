@@ -74,10 +74,12 @@ func (s *SQLiteStore) StoreEvent(event *models.Event) error {
 	
 	var metadataJSON []byte
 	if event.Metadata != nil {
-		var err error
-		metadataJSON, err = event.Metadata.Value()
+		value, err := event.Metadata.Value()
 		if err != nil {
 			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		if value != nil {
+			metadataJSON = value.([]byte)
 		}
 	}
 
