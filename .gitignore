@@ -1,3 +1,9 @@
+# secrets
 .env
+
+# testing
 go.sum
 events
+
+# data
+data/events.db
