@@ -29,6 +29,7 @@ export interface EventFilter {
   end_time?: string;
   limit?: number;
   offset?: number;
+  tags?: string[];
 }
 
 export interface EventsResponse {
@@ -61,4 +62,31 @@ export interface HealthResponse {
 export interface WebSocketMessage {
   type: 'event' | 'filter_ack';
   data: Event | any;
+}
+
+export interface EventListener {
+  id: number;
+  name: string;
+  type: SourceType;
+  enabled: boolean;
+  config: Record<string, any>;
+  tags: string[];
+  interval: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventTag {
+  id: number;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
+export interface ListenersResponse {
+  listeners: EventListener[];
+}
+
+export interface TagsResponse {
+  tags: EventTag[];
 } 
