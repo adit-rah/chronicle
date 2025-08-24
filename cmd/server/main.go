@@ -62,7 +62,7 @@ func main() {
 	// Wait for interrupt signal for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	<-sigChan
 	log.Println("Received shutdown signal, starting graceful shutdown...")
 
@@ -82,4 +82,4 @@ func main() {
 	disp.Stop()
 
 	log.Println("Event Aggregator shut down successfully")
-} 
+}

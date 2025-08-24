@@ -127,7 +127,7 @@ function App() {
       <header className="app-header">
         <div className="header-left">
           <GitCommit size={20} />
-          <h1>event-aggregator</h1>
+          <h1>chronicle: event-aggregator</h1>
           <span className="branch-info">main</span>
         </div>
         
