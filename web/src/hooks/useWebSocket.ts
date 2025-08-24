@@ -5,7 +5,7 @@ export function useWebSocket(url: string) {
   const [isConnected, setIsConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<Event | null>(null);
   const ws = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimer = useRef<number | null>(null);
 
   const connect = () => {
     try {
@@ -15,7 +15,7 @@ export function useWebSocket(url: string) {
         console.log('WebSocket connected');
         setIsConnected(true);
         if (reconnectTimer.current) {
-          clearTimeout(reconnectTimer.current);
+          window.clearTimeout(reconnectTimer.current);
           reconnectTimer.current = null;
         }
       };
@@ -36,7 +36,7 @@ export function useWebSocket(url: string) {
         setIsConnected(false);
         
         // Attempt to reconnect after 3 seconds
-        reconnectTimer.current = setTimeout(() => {
+        reconnectTimer.current = window.setTimeout(() => {
           console.log('Attempting to reconnect...');
           connect();
         }, 3000);
@@ -57,7 +57,7 @@ export function useWebSocket(url: string) {
 
     return () => {
       if (reconnectTimer.current) {
-        clearTimeout(reconnectTimer.current);
+        window.clearTimeout(reconnectTimer.current);
       }
       if (ws.current) {
         ws.current.close();

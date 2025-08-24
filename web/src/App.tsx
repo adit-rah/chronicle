@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Activity, RefreshCw, Wifi, WifiOff, ExternalLink, GitCommit } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, ExternalLink, GitCommit } from 'lucide-react';
 import { Event, EventFilter, Stats, SourceType, EventCategory } from './types';
 import { useWebSocket } from './hooks/useWebSocket';
 import { fetchEvents, fetchStats } from './api';
@@ -24,7 +24,7 @@ const categoryShorts: Record<EventCategory, string> = {
 
 function App() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [filter, setFilter] = useState<EventFilter>({ limit: 100 });
+  const [filter] = useState<EventFilter>({ limit: 100 });
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -169,7 +169,7 @@ function App() {
       </main>
 
       {/* Styles */}
-      <style jsx>{`
+      <style>{`
         * {
           box-sizing: border-box;
         }
