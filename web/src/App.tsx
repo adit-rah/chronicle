@@ -4,6 +4,8 @@ import { RefreshCw, Wifi, WifiOff, ExternalLink, GitCommit, Settings, Tag } from
 import { Event, EventFilter, Stats, SourceType, EventCategory } from './types';
 import { useWebSocket } from './hooks/useWebSocket';
 import { fetchEvents, fetchStats } from './api';
+import { ListenerManagement } from './components/ListenerManagement';
+import { TagManagement } from './components/TagManagement';
 
 const sourceColors: Record<SourceType, string> = {
   rss: '#f97316',      // orange
@@ -28,6 +30,7 @@ function App() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<'listeners' | 'tags'>('listeners');
 
   const { isConnected, lastEvent } = useWebSocket('ws://localhost:8080/api/v1/ws');
 
@@ -150,6 +153,12 @@ function App() {
           <button onClick={loadData} className="refresh-btn" disabled={loading}>
             <RefreshCw size={14} className={loading ? 'spinning' : ''} />
           </button>
+          <button 
+            className="refresh-btn"
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings size={16} />
+          </button>
         </div>
       </header>
 
@@ -168,6 +177,48 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="settings-overlay">
+          <div className="settings-modal">
+            <div className="settings-header">
+              <h2>Settings</h2>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowSettings(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="settings-tabs">
+              <button 
+                className={`tab-btn ${activeTab === 'listeners' ? 'active' : ''}`}
+                onClick={() => setActiveTab('listeners')}
+              >
+                Event Listeners
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'tags' ? 'active' : ''}`}
+                onClick={() => setActiveTab('tags')}
+              >
+                <Tag size={14} />
+                Tags
+              </button>
+            </div>
+
+            <div className="settings-content">
+              {activeTab === 'listeners' && (
+                <ListenerManagement onClose={() => setShowSettings(false)} />
+              )}
+              {activeTab === 'tags' && (
+                <TagManagement onClose={() => setShowSettings(false)} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Styles */}
       <style>{`
@@ -406,6 +457,391 @@ function App() {
             flex-direction: column;
             gap: 2px;
           }
+        }
+
+        /* Settings Modal Styles */
+        .settings-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(1, 4, 9, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .settings-modal {
+          background: #0d1117;
+          border: 1px solid #30363d;
+          border-radius: 8px;
+          max-width: 90vw;
+          max-height: 90vh;
+          width: 900px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .settings-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px;
+          border-bottom: 1px solid #30363d;
+        }
+
+        .settings-header h2 {
+          margin: 0;
+          color: #f0f6fc;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .settings-tabs {
+          display: flex;
+          background: #161b22;
+          border-bottom: 1px solid #30363d;
+        }
+
+        .tab-btn {
+          background: transparent;
+          border: none;
+          color: #7d8590;
+          padding: 12px 16px;
+          cursor: pointer;
+          border-bottom: 2px solid transparent;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+        }
+
+        .tab-btn:hover {
+          color: #f0f6fc;
+        }
+
+        .tab-btn.active {
+          color: #f0f6fc;
+          border-bottom-color: #fd7e14;
+        }
+
+        .settings-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px;
+        }
+
+        .btn {
+          background: #21262d;
+          border: 1px solid #30363d;
+          color: #f0f6fc;
+          border-radius: 6px;
+          padding: 6px 12px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          text-decoration: none;
+        }
+
+        .btn:hover {
+          background: #30363d;
+          border-color: #8b949e;
+        }
+
+        .btn-primary {
+          background: #238636;
+          border-color: #238636;
+        }
+
+        .btn-primary:hover {
+          background: #2ea043;
+          border-color: #2ea043;
+        }
+
+        .btn-secondary {
+          background: #21262d;
+          border-color: #30363d;
+        }
+
+        .btn-icon {
+          background: transparent;
+          border: none;
+          color: #7d8590;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 4px;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .btn-icon:hover {
+          color: #f0f6fc;
+          background: #30363d;
+        }
+
+        .btn-icon.danger:hover {
+          color: #f85149;
+        }
+
+        /* Component Styles */
+        .listener-management,
+        .tag-management {
+          background: transparent;
+          border: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .listener-header,
+        .tag-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #30363d;
+        }
+
+        .listener-header h3,
+        .tag-header h3 {
+          margin: 0;
+          color: #f0f6fc;
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .listener-form-overlay,
+        .tag-form-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(1, 4, 9, 0.9);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1100;
+        }
+
+        .listener-form,
+        .tag-form {
+          background: #161b22;
+          border: 1px solid #30363d;
+          border-radius: 8px;
+          padding: 24px;
+          max-width: 500px;
+          width: 90%;
+          max-height: 90vh;
+          overflow-y: auto;
+        }
+
+        .listener-form h4,
+        .tag-form h4 {
+          margin: 0 0 20px 0;
+          color: #f0f6fc;
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .form-group {
+          margin-bottom: 16px;
+        }
+
+        .form-group label {
+          display: block;
+          margin-bottom: 6px;
+          color: #f0f6fc;
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+          width: 100%;
+          background: #0d1117;
+          border: 1px solid #30363d;
+          border-radius: 6px;
+          padding: 8px 12px;
+          color: #f0f6fc;
+          font-size: 13px;
+          box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+          outline: none;
+          border-color: #58a6ff;
+          box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-group input[type="checkbox"] {
+          width: auto;
+          margin-right: 8px;
+        }
+
+        .form-actions {
+          display: flex;
+          gap: 8px;
+          justify-content: flex-end;
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px solid #30363d;
+        }
+
+        .listeners-list,
+        .tags-list {
+          min-height: 200px;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 40px;
+          color: #7d8590;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 40px;
+          color: #7d8590;
+        }
+
+        .empty-state .hint {
+          font-size: 12px;
+          margin-top: 8px;
+          color: #656d76;
+        }
+
+        .listeners-table {
+          border: 1px solid #30363d;
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .listener-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          border-bottom: 1px solid #30363d;
+        }
+
+        .listener-row:last-child {
+          border-bottom: none;
+        }
+
+        .listener-row.disabled {
+          opacity: 0.6;
+        }
+
+        .listener-info {
+          flex: 1;
+        }
+
+        .listener-name {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #f0f6fc;
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+
+        .status-icon.enabled {
+          color: #2ea043;
+        }
+
+        .status-icon.disabled {
+          color: #7d8590;
+        }
+
+        .listener-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 12px;
+          color: #7d8590;
+        }
+
+        .listener-type {
+          background: #21262d;
+          color: #7d8590;
+          padding: 2px 6px;
+          border-radius: 3px;
+          text-transform: uppercase;
+          font-size: 10px;
+          font-weight: 600;
+        }
+
+        .listener-tags {
+          display: flex;
+          gap: 4px;
+        }
+
+        .tag {
+          background: #1f6feb;
+          color: #f0f6fc;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 10px;
+        }
+
+        .listener-actions {
+          display: flex;
+          gap: 4px;
+        }
+
+        .tags-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 12px;
+        }
+
+        .tag-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background: #161b22;
+          border: 1px solid #30363d;
+          border-radius: 6px;
+        }
+
+        .tag-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #f0f6fc;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .color-picker {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 8px;
+          flex-wrap: wrap;
+        }
+
+        .color-option {
+          width: 24px;
+          height: 24px;
+          border-radius: 4px;
+          border: 2px solid transparent;
+          cursor: pointer;
+        }
+
+        .color-option.selected {
+          border-color: #f0f6fc;
         }
       `}</style>
     </div>
