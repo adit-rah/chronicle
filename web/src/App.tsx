@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { RefreshCw, Wifi, WifiOff, ExternalLink, GitCommit } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, ExternalLink, GitCommit, Settings, Tag } from 'lucide-react';
 import { Event, EventFilter, Stats, SourceType, EventCategory } from './types';
 import { useWebSocket } from './hooks/useWebSocket';
 import { fetchEvents, fetchStats } from './api';
@@ -27,6 +27,7 @@ function App() {
   const [filter] = useState<EventFilter>({ limit: 100 });
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   const { isConnected, lastEvent } = useWebSocket('ws://localhost:8080/api/v1/ws');
 

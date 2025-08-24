@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -56,6 +57,36 @@ func (s *SQLiteStore) migrate() error {
 	CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
 	CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
 	CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at);
+
+	CREATE TABLE IF NOT EXISTS event_listeners (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL UNIQUE,
+		type TEXT NOT NULL,
+		enabled BOOLEAN NOT NULL DEFAULT 1,
+		config TEXT,
+		tags TEXT,
+		interval INTEGER NOT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_listeners_type ON event_listeners(type);
+	CREATE INDEX IF NOT EXISTS idx_listeners_enabled ON event_listeners(enabled);
+
+	CREATE TABLE IF NOT EXISTS event_tags (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL UNIQUE,
+		color TEXT NOT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS event_tag_associations (
+		event_id INTEGER NOT NULL,
+		tag_id INTEGER NOT NULL,
+		PRIMARY KEY (event_id, tag_id),
+		FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+		FOREIGN KEY (tag_id) REFERENCES event_tags(id) ON DELETE CASCADE
+	);
 	`
 
 	_, err := s.db.Exec(schema)
@@ -281,4 +312,195 @@ func (s *SQLiteStore) GetEventCount(filter models.EventFilter) (int, error) {
 // Close closes the database connection
 func (s *SQLiteStore) Close() error {
 	return s.db.Close()
+}
+
+// Event Listener Management
+
+// CreateListener creates a new event listener
+func (s *SQLiteStore) CreateListener(listener *models.EventListener) error {
+	query := `
+	INSERT INTO event_listeners (name, type, enabled, config, tags, interval, created_at, updated_at)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`
+	
+	now := time.Now()
+	listener.CreatedAt = now
+	listener.UpdatedAt = now
+	
+	var configJSON, tagsJSON []byte
+	var err error
+	
+	if listener.Config != nil {
+		configJSON, err = json.Marshal(listener.Config)
+		if err != nil {
+			return fmt.Errorf("failed to marshal config: %w", err)
+		}
+	}
+	
+	if listener.Tags != nil {
+		tagsJSON, err = json.Marshal(listener.Tags)
+		if err != nil {
+			return fmt.Errorf("failed to marshal tags: %w", err)
+		}
+	}
+	
+	result, err := s.db.Exec(query, listener.Name, listener.Type, listener.Enabled, 
+		string(configJSON), string(tagsJSON), int64(listener.Interval), listener.CreatedAt, listener.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create listener: %w", err)
+	}
+	
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get listener ID: %w", err)
+	}
+	
+	listener.ID = id
+	return nil
+}
+
+// GetListeners retrieves all event listeners
+func (s *SQLiteStore) GetListeners() ([]*models.EventListener, error) {
+	query := `SELECT id, name, type, enabled, config, tags, interval, created_at, updated_at FROM event_listeners ORDER BY created_at DESC`
+	
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query listeners: %w", err)
+	}
+	defer rows.Close()
+	
+	var listeners []*models.EventListener
+	for rows.Next() {
+		listener := &models.EventListener{}
+		var configJSON, tagsJSON sql.NullString
+		var intervalNs int64
+		
+		err := rows.Scan(&listener.ID, &listener.Name, &listener.Type, &listener.Enabled,
+			&configJSON, &tagsJSON, &intervalNs, &listener.CreatedAt, &listener.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan listener: %w", err)
+		}
+		
+		listener.Interval = time.Duration(intervalNs)
+		
+		if configJSON.Valid && configJSON.String != "" {
+			if err := json.Unmarshal([]byte(configJSON.String), &listener.Config); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+			}
+		}
+		
+		if tagsJSON.Valid && tagsJSON.String != "" {
+			if err := json.Unmarshal([]byte(tagsJSON.String), &listener.Tags); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal tags: %w", err)
+			}
+		}
+		
+		listeners = append(listeners, listener)
+	}
+	
+	return listeners, nil
+}
+
+// UpdateListener updates an existing event listener
+func (s *SQLiteStore) UpdateListener(listener *models.EventListener) error {
+	query := `
+	UPDATE event_listeners SET name=?, type=?, enabled=?, config=?, tags=?, interval=?, updated_at=?
+	WHERE id=?
+	`
+	
+	listener.UpdatedAt = time.Now()
+	
+	var configJSON, tagsJSON []byte
+	var err error
+	
+	if listener.Config != nil {
+		configJSON, err = json.Marshal(listener.Config)
+		if err != nil {
+			return fmt.Errorf("failed to marshal config: %w", err)
+		}
+	}
+	
+	if listener.Tags != nil {
+		tagsJSON, err = json.Marshal(listener.Tags)
+		if err != nil {
+			return fmt.Errorf("failed to marshal tags: %w", err)
+		}
+	}
+	
+	_, err = s.db.Exec(query, listener.Name, listener.Type, listener.Enabled,
+		string(configJSON), string(tagsJSON), int64(listener.Interval), listener.UpdatedAt, listener.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update listener: %w", err)
+	}
+	
+	return nil
+}
+
+// DeleteListener deletes an event listener
+func (s *SQLiteStore) DeleteListener(id int64) error {
+	query := `DELETE FROM event_listeners WHERE id=?`
+	
+	_, err := s.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete listener: %w", err)
+	}
+	
+	return nil
+}
+
+// Event Tag Management
+
+// CreateTag creates a new event tag
+func (s *SQLiteStore) CreateTag(tag *models.EventTag) error {
+	query := `INSERT INTO event_tags (name, color, created_at) VALUES (?, ?, ?)`
+	
+	tag.CreatedAt = time.Now()
+	
+	result, err := s.db.Exec(query, tag.Name, tag.Color, tag.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create tag: %w", err)
+	}
+	
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get tag ID: %w", err)
+	}
+	
+	tag.ID = id
+	return nil
+}
+
+// GetTags retrieves all event tags
+func (s *SQLiteStore) GetTags() ([]*models.EventTag, error) {
+	query := `SELECT id, name, color, created_at FROM event_tags ORDER BY name`
+	
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query tags: %w", err)
+	}
+	defer rows.Close()
+	
+	var tags []*models.EventTag
+	for rows.Next() {
+		tag := &models.EventTag{}
+		err := rows.Scan(&tag.ID, &tag.Name, &tag.Color, &tag.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan tag: %w", err)
+		}
+		tags = append(tags, tag)
+	}
+	
+	return tags, nil
+}
+
+// DeleteTag deletes an event tag
+func (s *SQLiteStore) DeleteTag(id int64) error {
+	query := `DELETE FROM event_tags WHERE id=?`
+	
+	_, err := s.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete tag: %w", err)
+	}
+	
+	return nil
 } 

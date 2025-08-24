@@ -102,6 +102,17 @@ func (s *Server) setupRouter() *gin.Engine {
 
 		// WebSocket endpoint
 		api.GET("/ws", s.handlers.WebSocketHandler)
+
+		// Event Listeners
+		api.GET("/listeners", s.handlers.GetListenersHandler)
+		api.POST("/listeners", s.handlers.CreateListenerHandler)
+		api.PUT("/listeners/:id", s.handlers.UpdateListenerHandler)
+		api.DELETE("/listeners/:id", s.handlers.DeleteListenerHandler)
+
+		// Event Tags
+		api.GET("/tags", s.handlers.GetTagsHandler)
+		api.POST("/tags", s.handlers.CreateTagHandler)
+		api.DELETE("/tags/:id", s.handlers.DeleteTagHandler)
 	}
 
 	// Serve static files (for frontend)

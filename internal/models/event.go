@@ -78,4 +78,32 @@ type EventFilter struct {
 	EndTime     *time.Time    `json:"end_time"`
 	Limit       int           `json:"limit"`
 	Offset      int           `json:"offset"`
+	Tags        []string      `json:"tags"`
+}
+
+// EventListener represents a configurable event source listener
+type EventListener struct {
+	ID          int64         `json:"id" db:"id"`
+	Name        string        `json:"name" db:"name"`
+	Type        SourceType    `json:"type" db:"type"`
+	Enabled     bool          `json:"enabled" db:"enabled"`
+	Config      Metadata      `json:"config" db:"config"`
+	Tags        []string      `json:"tags" db:"tags"`
+	Interval    time.Duration `json:"interval" db:"interval"`
+	CreatedAt   time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at" db:"updated_at"`
+}
+
+// EventTag represents a tag that can be associated with events
+type EventTag struct {
+	ID        int64     `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	Color     string    `json:"color" db:"color"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+}
+
+// EventTagAssociation links events to tags
+type EventTagAssociation struct {
+	EventID int64 `json:"event_id" db:"event_id"`
+	TagID   int64 `json:"tag_id" db:"tag_id"`
 } 

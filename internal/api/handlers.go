@@ -274,4 +274,151 @@ func (h *APIHandlers) getTotalEventCount() int {
 		return 0
 	}
 	return count
+}
+
+// Event Listener Handlers
+
+// GetListenersHandler retrieves all event listeners
+func (h *APIHandlers) GetListenersHandler(c *gin.Context) {
+	listeners, err := h.store.GetListeners()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve listeners",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"listeners": listeners,
+	})
+}
+
+// CreateListenerHandler creates a new event listener
+func (h *APIHandlers) CreateListenerHandler(c *gin.Context) {
+	var listener models.EventListener
+	if err := c.ShouldBindJSON(&listener); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := h.store.CreateListener(&listener); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create listener",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, listener)
+}
+
+// UpdateListenerHandler updates an existing event listener
+func (h *APIHandlers) UpdateListenerHandler(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid listener ID",
+		})
+		return
+	}
+
+	var listener models.EventListener
+	if err := c.ShouldBindJSON(&listener); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	listener.ID = id
+	if err := h.store.UpdateListener(&listener); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update listener",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, listener)
+}
+
+// DeleteListenerHandler deletes an event listener
+func (h *APIHandlers) DeleteListenerHandler(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid listener ID",
+		})
+		return
+	}
+
+	if err := h.store.DeleteListener(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete listener",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Listener deleted successfully",
+	})
+}
+
+// Event Tag Handlers
+
+// GetTagsHandler retrieves all event tags
+func (h *APIHandlers) GetTagsHandler(c *gin.Context) {
+	tags, err := h.store.GetTags()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve tags",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tags": tags,
+	})
+}
+
+// CreateTagHandler creates a new event tag
+func (h *APIHandlers) CreateTagHandler(c *gin.Context) {
+	var tag models.EventTag
+	if err := c.ShouldBindJSON(&tag); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := h.store.CreateTag(&tag); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create tag",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, tag)
+}
+
+// DeleteTagHandler deletes an event tag
+func (h *APIHandlers) DeleteTagHandler(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid tag ID",
+		})
+		return
+	}
+
+	if err := h.store.DeleteTag(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete tag",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tag deleted successfully",
+	})
 } 
