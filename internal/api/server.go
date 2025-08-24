@@ -89,7 +89,7 @@ func (s *Server) setupRouter() *gin.Engine {
 	api := router.Group("/api/v1")
 	{
 		// Health check
-		api.GET("/health", s.handlers.HealthHandler)
+		api.Any("/health", s.handlers.HealthHandler) // so docker can actually put it into the container
 
 		// Events
 		api.GET("/events", s.handlers.GetEventsHandler)

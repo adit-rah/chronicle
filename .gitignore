@@ -4,6 +4,7 @@
 # testing
 go.sum
 events
+bin
 
 # data
 data/events.db

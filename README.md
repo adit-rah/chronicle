@@ -1,4 +1,4 @@
-# Event Stream Dashboard
+# Chronicle: An Event Stream Dashboard
 
 A self-hosted application that aggregates different information streams (news, GitHub activity, weather updates, job postings, etc.) into a single, real-time dashboard.
 
