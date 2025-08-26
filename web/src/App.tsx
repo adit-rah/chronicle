@@ -687,6 +687,117 @@ function App() {
           margin-right: 8px;
         }
 
+        .form-hint {
+          color: #7d8590;
+          font-size: 12px;
+          font-style: italic;
+          margin-top: 4px;
+        }
+
+        .config-help {
+          margin-bottom: 12px;
+        }
+
+        .config-help small {
+          color: #7d8590;
+          font-style: italic;
+        }
+
+        .config-fields {
+          margin-top: 8px;
+        }
+
+        .config-field {
+          margin-bottom: 12px;
+        }
+
+        .config-field label {
+          display: block;
+          margin-bottom: 4px;
+          color: #f0f6fc;
+          font-size: 12px;
+          font-weight: 500;
+          text-transform: capitalize;
+        }
+
+        .field-help {
+          color: #7d8590;
+          font-size: 11px;
+          margin-top: 4px;
+          display: block;
+        }
+
+        .tag-selection {
+          margin-top: 8px;
+        }
+
+        .selected-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-bottom: 8px;
+        }
+
+        .selected-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          color: white;
+        }
+
+        .remove-tag {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          padding: 0;
+          margin-left: 4px;
+        }
+
+        .remove-tag:hover {
+          opacity: 0.7;
+        }
+
+        .no-config {
+          color: #7d8590;
+          font-style: italic;
+          margin: 8px 0;
+        }
+
+        .raw-config-editor {
+          margin-top: 12px;
+          border: 1px solid #30363d;
+          border-radius: 6px;
+          padding: 8px;
+        }
+
+        .raw-config-editor summary {
+          cursor: pointer;
+          color: #7d8590;
+          font-size: 12px;
+          margin-bottom: 8px;
+        }
+
+        .raw-config-editor summary:hover {
+          color: #f0f6fc;
+        }
+
+        .raw-config-editor textarea {
+          width: 100%;
+          background: #0d1117;
+          border: 1px solid #30363d;
+          border-radius: 4px;
+          padding: 8px;
+          color: #f0f6fc;
+          font-size: 12px;
+        }
+
         .form-actions {
           display: flex;
           gap: 8px;
