@@ -134,9 +134,10 @@ export function ListenerManagement() {
       }
       await loadListeners();
       resetForm();
+      alert('Listener saved successfully! Worker has been started and should begin fetching events.');
     } catch (error) {
       console.error('Failed to save listener:', error);
-      alert('Failed to save listener. Please check the console for details.');
+      alert(`Failed to save listener: ${error.message}`);
     }
   };
 

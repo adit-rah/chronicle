@@ -310,6 +310,11 @@ func (h *APIHandlers) CreateListenerHandler(c *gin.Context) {
 		return
 	}
 
+	// Reload workers to include the new listener
+	if err := h.dispatcher.ReloadListeners(); err != nil {
+		log.Printf("Failed to reload listeners after creation: %v", err)
+	}
+
 	c.JSON(http.StatusCreated, listener)
 }
 
@@ -339,6 +344,11 @@ func (h *APIHandlers) UpdateListenerHandler(c *gin.Context) {
 		return
 	}
 
+	// Reload workers to apply the updated listener configuration
+	if err := h.dispatcher.ReloadListeners(); err != nil {
+		log.Printf("Failed to reload listeners after update: %v", err)
+	}
+
 	c.JSON(http.StatusOK, listener)
 }
 
@@ -357,6 +367,11 @@ func (h *APIHandlers) DeleteListenerHandler(c *gin.Context) {
 			"error": "Failed to delete listener",
 		})
 		return
+	}
+
+	// Reload workers to remove the deleted listener
+	if err := h.dispatcher.ReloadListeners(); err != nil {
+		log.Printf("Failed to reload listeners after deletion: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
