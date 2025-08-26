@@ -52,6 +52,14 @@ func (w *JobsWorker) GetName() string {
 	return w.name
 }
 
+// InitializeLastSeen initializes the lastSeen map with existing events from database
+func (w *JobsWorker) InitializeLastSeen(existingEvents []string) {
+	for _, eventID := range existingEvents {
+		w.lastSeen[eventID] = true
+	}
+	log.Printf("Jobs worker %s: initialized with %d existing events", w.name, len(existingEvents))
+}
+
 // Start begins the Jobs polling loop
 func (w *JobsWorker) Start(ctx context.Context, eventChan chan<- *models.Event) error {
 	log.Printf("Starting Jobs worker: %s (URL: %s, Keywords: %v, Interval: %v)", 

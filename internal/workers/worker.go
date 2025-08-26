@@ -17,6 +17,9 @@ type Worker interface {
 	
 	// GetName returns a human-readable name for this worker instance
 	GetName() string
+	
+	// InitializeLastSeen initializes the worker with existing events to avoid duplicates
+	InitializeLastSeen(existingEvents []string)
 }
 
 // WorkerFactory creates workers based on source configuration

@@ -46,6 +46,14 @@ func (w *RSSWorker) GetName() string {
 	return w.name
 }
 
+// InitializeLastSeen initializes the lastSeen map with existing events from database
+func (w *RSSWorker) InitializeLastSeen(existingEvents []string) {
+	for _, eventID := range existingEvents {
+		w.lastSeen[eventID] = true
+	}
+	log.Printf("RSS worker %s: initialized with %d existing events", w.name, len(existingEvents))
+}
+
 // Start begins the RSS polling loop
 func (w *RSSWorker) Start(ctx context.Context, eventChan chan<- *models.Event) error {
 	log.Printf("Starting RSS worker: %s (URL: %s, Interval: %v)", w.name, w.config.URL, w.interval)

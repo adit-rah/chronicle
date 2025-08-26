@@ -115,6 +115,14 @@ func (d *EventDispatcher) startWorker(sourceConfig config.SourceConfig) error {
 		return err
 	}
 
+	// Initialize worker with existing events to avoid duplicates
+	existingEventIDs, err := d.store.GetExistingEventIDs(worker.GetSourceType(), worker.GetName())
+	if err != nil {
+		log.Printf("Warning: failed to load existing events for worker %s: %v", worker.GetName(), err)
+	} else {
+		worker.InitializeLastSeen(existingEventIDs)
+	}
+
 	d.workers = append(d.workers, worker)
 	d.workerGroup.Add(1)
 

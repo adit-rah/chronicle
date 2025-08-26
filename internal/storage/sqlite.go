@@ -252,6 +252,34 @@ func (s *SQLiteStore) GetEvents(filter models.EventFilter) ([]*models.Event, err
 	return events, nil
 }
 
+// GetExistingEventIDs returns existing event source IDs for a specific source type and name
+func (s *SQLiteStore) GetExistingEventIDs(sourceType models.SourceType, sourceName string) ([]string, error) {
+	// Get recent events (last 100) to initialize lastSeen for workers
+	query := `
+	SELECT source_id FROM events 
+	WHERE source_type = ? 
+	ORDER BY timestamp DESC 
+	LIMIT 100
+	`
+	
+	rows, err := s.db.Query(query, sourceType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query existing event IDs: %w", err)
+	}
+	defer rows.Close()
+	
+	var eventIDs []string
+	for rows.Next() {
+		var sourceID string
+		if err := rows.Scan(&sourceID); err != nil {
+			return nil, fmt.Errorf("failed to scan event ID: %w", err)
+		}
+		eventIDs = append(eventIDs, sourceID)
+	}
+	
+	return eventIDs, nil
+}
+
 // GetEventCount returns the total count of events matching the filter
 func (s *SQLiteStore) GetEventCount(filter models.EventFilter) (int, error) {
 	query := "SELECT COUNT(*) FROM events WHERE 1=1"

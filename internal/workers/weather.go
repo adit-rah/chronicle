@@ -67,6 +67,12 @@ func (w *WeatherWorker) GetName() string {
 	return w.name
 }
 
+// InitializeLastSeen initializes the lastSeen map with existing events from database
+func (w *WeatherWorker) InitializeLastSeen(existingEvents []string) {
+	// Weather worker doesn't use lastSeen tracking since weather data is always current
+	// This is a no-op implementation to satisfy the Worker interface
+}
+
 // Start begins the Weather polling loop
 func (w *WeatherWorker) Start(ctx context.Context, eventChan chan<- *models.Event) error {
 	log.Printf("Starting Weather worker: %s (City: %s, Interval: %v)", 

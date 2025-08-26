@@ -47,6 +47,14 @@ func NewGitHubWorker(sourceConfig config.SourceConfig) (*GitHubWorker, error) {
 	}, nil
 }
 
+// InitializeLastSeen initializes the lastSeen map with existing events from database
+func (w *GitHubWorker) InitializeLastSeen(existingEvents []string) {
+	for _, eventID := range existingEvents {
+		w.lastSeen[eventID] = true
+	}
+	log.Printf("GitHub worker %s: initialized with %d existing events", w.name, len(existingEvents))
+}
+
 // GetSourceType returns the source type
 func (w *GitHubWorker) GetSourceType() models.SourceType {
 	return models.SourceTypeGitHub
