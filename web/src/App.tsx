@@ -764,6 +764,40 @@ function App() {
           opacity: 0.7;
         }
 
+        .no-config {
+          color: #7d8590;
+          font-style: italic;
+          margin: 8px 0;
+        }
+
+        .raw-config-editor {
+          margin-top: 12px;
+          border: 1px solid #30363d;
+          border-radius: 6px;
+          padding: 8px;
+        }
+
+        .raw-config-editor summary {
+          cursor: pointer;
+          color: #7d8590;
+          font-size: 12px;
+          margin-bottom: 8px;
+        }
+
+        .raw-config-editor summary:hover {
+          color: #f0f6fc;
+        }
+
+        .raw-config-editor textarea {
+          width: 100%;
+          background: #0d1117;
+          border: 1px solid #30363d;
+          border-radius: 4px;
+          padding: 8px;
+          color: #f0f6fc;
+          font-size: 12px;
+        }
+
         .form-actions {
           display: flex;
           gap: 8px;

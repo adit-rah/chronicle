@@ -109,6 +109,8 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Submitting form with data:', formData);
+    
     // Validate configuration
     const configErrors = validateConfig(formData.type, formData.config);
     if (configErrors.length > 0) {
@@ -116,14 +118,23 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
       return;
     }
     
+    // Basic validation
+    if (!formData.name.trim()) {
+      alert('Please enter a listener name.');
+      return;
+    }
+    
     try {
       if (editingListener) {
+        console.log('Updating listener:', editingListener.id, formData);
         await updateListener(editingListener.id, { ...formData, id: editingListener.id });
       } else {
+        console.log('Creating new listener:', formData);
         await createListener(formData);
       }
       await loadListeners();
       resetForm();
+      alert(`Listener ${editingListener ? 'updated' : 'created'} successfully!`);
     } catch (error) {
       console.error('Failed to save listener:', error);
       alert('Failed to save listener. Please check the console for details.');
@@ -224,6 +235,16 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
     const { type, config } = formData;
     const fields = configHelp[type].fields;
 
+    console.log('Rendering config fields:', { type, config, fields });
+
+    if (!fields || Object.keys(fields).length === 0) {
+      return (
+        <div className="config-fields">
+          <p className="no-config">No configuration fields required for this source type.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="config-fields">
         {Object.entries(fields).map(([fieldName, helpText]) => (
@@ -236,6 +257,7 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                 value={Array.isArray((config as any)[fieldName]) ? (config as any)[fieldName].join(', ') : ''}
                 onChange={(e) => {
                   const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
+                  console.log('Updating keywords:', { keywords, fieldName });
                   setFormData({
                     ...formData,
                     config: { ...config, [fieldName]: keywords }
@@ -248,10 +270,13 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                 type="text"
                 id={fieldName}
                 value={(config as any)[fieldName] || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...config, [fieldName]: e.target.value }
-                })}
+                onChange={(e) => {
+                  console.log('Updating config field:', { fieldName, value: e.target.value, config });
+                  setFormData({
+                    ...formData,
+                    config: { ...config, [fieldName]: e.target.value }
+                  });
+                }}
                 placeholder={helpText}
               />
             )}
@@ -325,6 +350,24 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                   <small>{configHelp[formData.type].description}</small>
                 </div>
                 {renderConfigFields()}
+                <details className="raw-config-editor">
+                  <summary>Advanced: Edit Raw JSON</summary>
+                  <textarea
+                    value={JSON.stringify(formData.config, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        const newConfig = JSON.parse(e.target.value);
+                        console.log('Updating config via JSON:', newConfig);
+                        setFormData({ ...formData, config: newConfig });
+                      } catch (error) {
+                        console.warn('Invalid JSON, ignoring change:', error);
+                      }
+                    }}
+                    rows={6}
+                    placeholder='{"url": "https://example.com/feed"}'
+                    style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                  />
+                </details>
               </div>
 
               <div className="form-group">
