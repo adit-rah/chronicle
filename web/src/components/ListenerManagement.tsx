@@ -280,7 +280,6 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                 placeholder={helpText}
               />
             )}
-            <small className="field-help">{helpText}</small>
           </div>
         ))}
       </div>
@@ -346,9 +345,6 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
 
               <div className="form-group">
                 <label>Configuration</label>
-                <div className="config-help">
-                  <small>{configHelp[formData.type].description}</small>
-                </div>
                 {renderConfigFields()}
                 <details className="raw-config-editor">
                   <summary>Advanced: Edit Raw JSON</summary>
