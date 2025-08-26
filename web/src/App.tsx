@@ -210,10 +210,10 @@ function App() {
 
             <div className="settings-content">
               {activeTab === 'listeners' && (
-                <ListenerManagement onClose={() => setShowSettings(false)} />
+                <ListenerManagement />
               )}
               {activeTab === 'tags' && (
-                <TagManagement onClose={() => setShowSettings(false)} />
+                <TagManagement />
               )}
             </div>
           </div>
@@ -694,15 +694,6 @@ function App() {
           margin-top: 4px;
         }
 
-        .config-help {
-          margin-bottom: 12px;
-        }
-
-        .config-help small {
-          color: #7d8590;
-          font-style: italic;
-        }
-
         .config-fields {
           margin-top: 8px;
         }
@@ -718,13 +709,6 @@ function App() {
           font-size: 12px;
           font-weight: 500;
           text-transform: capitalize;
-        }
-
-        .field-help {
-          color: #7d8590;
-          font-size: 11px;
-          margin-top: 4px;
-          display: block;
         }
 
         .tag-selection {

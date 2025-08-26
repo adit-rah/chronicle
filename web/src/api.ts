@@ -2,6 +2,7 @@ import { EventsResponse, EventFilter, Stats, HealthResponse, EventListener, Even
 
 const API_BASE = '/api/v1';
 
+// Generic API helpers
 async function fetchAPI<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`);
   if (!response.ok) {
@@ -10,36 +11,57 @@ async function fetchAPI<T>(endpoint: string): Promise<T> {
   return response.json();
 }
 
+async function postAPI<T>(endpoint: string, data: any): Promise<T> {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+async function putAPI<T>(endpoint: string, data: any): Promise<T> {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+async function deleteAPI(endpoint: string): Promise<void> {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+}
+
+// Event API
 export async function fetchEvents(filter: EventFilter = {}): Promise<EventsResponse> {
   const params = new URLSearchParams();
   
-  if (filter.source_types?.length) {
-    params.append('source_types', filter.source_types.join(','));
-  }
-  
-  if (filter.categories?.length) {
-    params.append('categories', filter.categories.join(','));
-  }
-  
-  if (filter.keywords?.length) {
-    params.append('keywords', filter.keywords.join(','));
-  }
-  
-  if (filter.start_time) {
-    params.append('start_time', filter.start_time);
-  }
-  
-  if (filter.end_time) {
-    params.append('end_time', filter.end_time);
-  }
-  
-  if (filter.limit) {
-    params.append('limit', filter.limit.toString());
-  }
-  
-  if (filter.offset) {
-    params.append('offset', filter.offset.toString());
-  }
+  Object.entries(filter).forEach(([key, value]) => {
+    if (value != null) {
+      if (Array.isArray(value) && value.length > 0) {
+        params.append(key, value.join(','));
+      } else if (!Array.isArray(value)) {
+        params.append(key, value.toString());
+      }
+    }
+  });
   
   const queryString = params.toString();
   const endpoint = queryString ? `/events?${queryString}` : '/events';
@@ -47,88 +69,31 @@ export async function fetchEvents(filter: EventFilter = {}): Promise<EventsRespo
   return fetchAPI<EventsResponse>(endpoint);
 }
 
-export async function fetchStats(): Promise<Stats> {
-  return fetchAPI<Stats>('/stats');
-}
+export const fetchStats = (): Promise<Stats> => 
+  fetchAPI<Stats>('/stats');
 
-// Listener API functions
-export async function fetchListeners(): Promise<ListenersResponse> {
-  return fetchAPI<ListenersResponse>('/listeners');
-}
+export const fetchHealth = (): Promise<HealthResponse> => 
+  fetchAPI<HealthResponse>('/health');
 
-export async function createListener(listener: Omit<EventListener, 'id' | 'created_at' | 'updated_at'>): Promise<EventListener> {
-  const response = await fetch(`${API_BASE}/listeners`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(listener),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-  
-  return response.json();
-}
+// Listener API
+export const fetchListeners = (): Promise<ListenersResponse> => 
+  fetchAPI<ListenersResponse>('/listeners');
 
-export async function updateListener(id: number, listener: Omit<EventListener, 'created_at' | 'updated_at'>): Promise<EventListener> {
-  const response = await fetch(`${API_BASE}/listeners/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(listener),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-  
-  return response.json();
-}
+export const createListener = (listener: Omit<EventListener, 'id' | 'created_at' | 'updated_at'>): Promise<EventListener> => 
+  postAPI<EventListener>('/listeners', listener);
 
-export async function deleteListener(id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/listeners/${id}`, {
-    method: 'DELETE',
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-}
+export const updateListener = (id: number, listener: Omit<EventListener, 'created_at' | 'updated_at'>): Promise<EventListener> => 
+  putAPI<EventListener>(`/listeners/${id}`, listener);
 
-// Tag API functions
-export async function fetchTags(): Promise<TagsResponse> {
-  return fetchAPI<TagsResponse>('/tags');
-}
+export const deleteListener = (id: number): Promise<void> => 
+  deleteAPI(`/listeners/${id}`);
 
-export async function createTag(tag: Omit<EventTag, 'id' | 'created_at'>): Promise<EventTag> {
-  const response = await fetch(`${API_BASE}/tags`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(tag),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-  
-  return response.json();
-}
+// Tag API
+export const fetchTags = (): Promise<TagsResponse> => 
+  fetchAPI<TagsResponse>('/tags');
 
-export async function deleteTag(id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/tags/${id}`, {
-    method: 'DELETE',
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-}
+export const createTag = (tag: Omit<EventTag, 'id' | 'created_at'>): Promise<EventTag> => 
+  postAPI<EventTag>('/tags', tag);
 
-export async function fetchHealth(): Promise<HealthResponse> {
-  return fetchAPI<HealthResponse>('/health');
-} 
+export const deleteTag = (id: number): Promise<void> => 
+  deleteAPI(`/tags/${id}`);

@@ -3,23 +3,19 @@ import { Plus, Trash2, Tag } from 'lucide-react';
 import { EventTag } from '../types';
 import { fetchTags, createTag, deleteTag } from '../api';
 
-interface TagManagementProps {
-  onClose?: () => void;
-}
-
-const predefinedColors = [
+const PREDEFINED_COLORS = [
   '#1f6feb', '#2ea043', '#f85149', '#fb8500', '#8b5cf6', 
   '#06b6d4', '#84cc16', '#eab308', '#ef4444', '#8b949e'
 ];
 
-export function TagManagement({ onClose }: TagManagementProps) {
+export function TagManagement() {
   const [tags, setTags] = useState<EventTag[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
-    color: predefinedColors[0],
+    color: PREDEFINED_COLORS[0],
   });
 
   useEffect(() => {
@@ -63,7 +59,7 @@ export function TagManagement({ onClose }: TagManagementProps) {
   const resetForm = () => {
     setFormData({
       name: '',
-      color: predefinedColors[0],
+      color: PREDEFINED_COLORS[0],
     });
     setShowForm(false);
   };
@@ -99,7 +95,7 @@ export function TagManagement({ onClose }: TagManagementProps) {
               <div className="form-group">
                 <label>Color</label>
                 <div className="color-picker">
-                  {predefinedColors.map(color => (
+                  {PREDEFINED_COLORS.map(color => (
                     <button
                       key={color}
                       type="button"
