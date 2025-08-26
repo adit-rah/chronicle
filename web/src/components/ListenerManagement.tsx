@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Power, PowerOff } from 'lucide-react';
-import { EventListener, SourceType } from '../types';
-import { fetchListeners, createListener, updateListener, deleteListener } from '../api';
+import { Plus, Edit, Trash2, Power, PowerOff, X } from 'lucide-react';
+import { EventListener, SourceType, EventTag } from '../types';
+import { fetchListeners, createListener, updateListener, deleteListener, fetchTags } from '../api';
 
 interface ListenerManagementProps {
   onClose?: () => void;
@@ -14,8 +14,59 @@ const sourceTypeOptions: { value: SourceType; label: string }[] = [
   { value: 'jobs', label: 'Job Listings' },
 ];
 
+// Configuration templates for each source type
+const configTemplates: Record<SourceType, object> = {
+  rss: {
+    url: ""
+  },
+  github: {
+    owner: "",
+    repository: ""
+  },
+  weather: {
+    city: ""
+  },
+  jobs: {
+    company_url: "",
+    keywords: [],
+    location: ""
+  }
+};
+
+// Help text for each configuration field
+const configHelp: Record<SourceType, { description: string; fields: Record<string, string> }> = {
+  rss: {
+    description: "RSS feed configuration for aggregating articles and posts",
+    fields: {
+      url: "RSS feed URL (e.g., https://example.com/feed.xml)"
+    }
+  },
+  github: {
+    description: "GitHub repository monitoring for commits, issues, and releases",
+    fields: {
+      owner: "Repository owner username or organization",
+      repository: "Repository name"
+    }
+  },
+  weather: {
+    description: "Weather API integration for location-based weather updates",
+    fields: {
+      city: "City name for weather monitoring"
+    }
+  },
+  jobs: {
+    description: "Job listing aggregation from company career pages",
+    fields: {
+      company_url: "Company careers API or RSS feed URL",
+      keywords: "Array of keywords to filter jobs (e.g., ['software', 'engineer'])",
+      location: "Job location filter"
+    }
+  }
+};
+
 export function ListenerManagement({ onClose }: ListenerManagementProps) {
   const [listeners, setListeners] = useState<EventListener[]>([]);
+  const [availableTags, setAvailableTags] = useState<EventTag[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingListener, setEditingListener] = useState<EventListener | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,13 +75,14 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
     name: '',
     type: 'rss' as SourceType,
     enabled: true,
-    config: {},
+    config: configTemplates['rss'],
     tags: [] as string[],
     interval: 900000000000, // 15 minutes in nanoseconds
   });
 
   useEffect(() => {
     loadListeners();
+    loadTags();
   }, []);
 
   const loadListeners = async () => {
@@ -45,8 +97,25 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
     }
   };
 
+  const loadTags = async () => {
+    try {
+      const response = await fetchTags();
+      setAvailableTags(response.tags || []);
+    } catch (error) {
+      console.error('Failed to load tags:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate configuration
+    const configErrors = validateConfig(formData.type, formData.config);
+    if (configErrors.length > 0) {
+      alert('Configuration errors:\n' + configErrors.join('\n'));
+      return;
+    }
+    
     try {
       if (editingListener) {
         await updateListener(editingListener.id, { ...formData, id: editingListener.id });
@@ -57,6 +126,7 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
       resetForm();
     } catch (error) {
       console.error('Failed to save listener:', error);
+      alert('Failed to save listener. Please check the console for details.');
     }
   };
 
@@ -85,16 +155,62 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
   };
 
   const resetForm = () => {
+    const defaultType = 'rss' as SourceType;
     setEditingListener(null);
     setFormData({
       name: '',
-      type: 'rss',
+      type: defaultType,
       enabled: true,
-      config: {},
+      config: { ...configTemplates[defaultType] },
       tags: [],
       interval: 900000000000,
     });
     setShowForm(false);
+  };
+
+  const handleTypeChange = (newType: SourceType) => {
+    setFormData({
+      ...formData,
+      type: newType,
+      config: { ...configTemplates[newType] }
+    });
+  };
+
+  const validateConfig = (type: SourceType, config: any): string[] => {
+    const errors: string[] = [];
+    
+    switch (type) {
+      case 'rss':
+        if (!config.url || !config.url.trim()) {
+          errors.push('RSS URL is required');
+        } else if (!config.url.startsWith('http')) {
+          errors.push('RSS URL must start with http:// or https://');
+        }
+        break;
+      case 'github':
+        if (!config.owner || !config.owner.trim()) {
+          errors.push('GitHub owner is required');
+        }
+        if (!config.repository || !config.repository.trim()) {
+          errors.push('GitHub repository is required');
+        }
+        break;
+      case 'weather':
+        if (!config.city || !config.city.trim()) {
+          errors.push('City name is required');
+        }
+        break;
+      case 'jobs':
+        if (!config.company_url || !config.company_url.trim()) {
+          errors.push('Company URL is required');
+        }
+        if (!config.location || !config.location.trim()) {
+          errors.push('Location is required');
+        }
+        break;
+    }
+    
+    return errors;
   };
 
   const formatInterval = (intervalNs: number) => {
@@ -102,6 +218,48 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
     return `${Math.floor(seconds / 3600)}h`;
+  };
+
+  const renderConfigFields = () => {
+    const { type, config } = formData;
+    const fields = configHelp[type].fields;
+
+    return (
+      <div className="config-fields">
+        {Object.entries(fields).map(([fieldName, helpText]) => (
+          <div key={fieldName} className="config-field">
+            <label htmlFor={fieldName}>{fieldName}</label>
+            {fieldName === 'keywords' ? (
+              <input
+                type="text"
+                id={fieldName}
+                value={Array.isArray((config as any)[fieldName]) ? (config as any)[fieldName].join(', ') : ''}
+                onChange={(e) => {
+                  const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
+                  setFormData({
+                    ...formData,
+                    config: { ...config, [fieldName]: keywords }
+                  });
+                }}
+                placeholder="Enter keywords separated by commas"
+              />
+            ) : (
+              <input
+                type="text"
+                id={fieldName}
+                value={(config as any)[fieldName] || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  config: { ...config, [fieldName]: e.target.value }
+                })}
+                placeholder={helpText}
+              />
+            )}
+            <small className="field-help">{helpText}</small>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -136,7 +294,8 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                 <label>Type</label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as SourceType })}
+                  onChange={(e) => handleTypeChange(e.target.value as SourceType)}
+                  disabled={!!editingListener}
                 >
                   {sourceTypeOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -144,6 +303,7 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
                     </option>
                   ))}
                 </select>
+                {!!editingListener && <small className="form-hint">Type cannot be changed when editing</small>}
               </div>
 
               <div className="form-group">
@@ -160,19 +320,57 @@ export function ListenerManagement({ onClose }: ListenerManagementProps) {
               </div>
 
               <div className="form-group">
-                <label>Configuration (JSON)</label>
-                <textarea
-                  value={JSON.stringify(formData.config, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setFormData({ ...formData, config: JSON.parse(e.target.value) });
-                    } catch {
-                      // Invalid JSON, keep previous value
-                    }
-                  }}
-                  rows={6}
-                  placeholder='{"url": "https://example.com/feed"}'
-                />
+                <label>Configuration</label>
+                <div className="config-help">
+                  <small>{configHelp[formData.type].description}</small>
+                </div>
+                {renderConfigFields()}
+              </div>
+
+              <div className="form-group">
+                <label>Tags</label>
+                <div className="tag-selection">
+                  <div className="selected-tags">
+                    {formData.tags.map(tagName => {
+                      const tag = availableTags.find(t => t.name === tagName);
+                      return (
+                        <span key={tagName} className="selected-tag" style={{ backgroundColor: tag?.color || '#7d8590' }}>
+                          {tagName}
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              tags: formData.tags.filter(t => t !== tagName)
+                            })}
+                            className="remove-tag"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value && !formData.tags.includes(e.target.value)) {
+                        setFormData({
+                          ...formData,
+                          tags: [...formData.tags, e.target.value]
+                        });
+                      }
+                    }}
+                  >
+                    <option value="">Select a tag...</option>
+                    {availableTags
+                      .filter(tag => !formData.tags.includes(tag.name))
+                      .map(tag => (
+                        <option key={tag.id} value={tag.name}>
+                          {tag.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
 
               <div className="form-group">
