@@ -39,6 +39,39 @@ const formatInterval = (intervalNs: number): string => {
   return `${Math.floor(seconds / 3600)}h`;
 };
 
+const formatIntervalForSelect = (intervalNs: number): string => {
+  const seconds = intervalNs / 1000000000;
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(seconds / 3600);
+  
+  if (hours >= 24) return '24h';
+  if (hours >= 12) return '12h';
+  if (hours >= 6) return '6h';
+  if (hours >= 4) return '4h';
+  if (hours >= 2) return '2h';
+  if (hours >= 1) return '1h';
+  if (minutes >= 30) return '30m';
+  if (minutes >= 15) return '15m';
+  if (minutes >= 10) return '10m';
+  return '5m'; // Default fallback
+};
+
+const parseIntervalFromSelect = (value: string): number => {
+  const intervals: Record<string, number> = {
+    '5m': 5 * MINUTES_TO_NANOSECONDS,
+    '10m': 10 * MINUTES_TO_NANOSECONDS,
+    '15m': 15 * MINUTES_TO_NANOSECONDS,
+    '30m': 30 * MINUTES_TO_NANOSECONDS,
+    '1h': 60 * MINUTES_TO_NANOSECONDS,
+    '2h': 120 * MINUTES_TO_NANOSECONDS,
+    '4h': 240 * MINUTES_TO_NANOSECONDS,
+    '6h': 360 * MINUTES_TO_NANOSECONDS,
+    '12h': 720 * MINUTES_TO_NANOSECONDS,
+    '24h': 1440 * MINUTES_TO_NANOSECONDS,
+  };
+  return intervals[value] || 15 * MINUTES_TO_NANOSECONDS;
+};
+
 const validateConfig = (type: SourceType, config: any): string[] => {
   const errors: string[] = [];
   const validators = {
@@ -363,13 +396,23 @@ export function ListenerManagement() {
               </div>
 
               <div className="form-group">
-                <label>Interval (minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={Math.floor(formData.interval / MINUTES_TO_NANOSECONDS)}
-                  onChange={(e) => updateFormField('interval', parseInt(e.target.value) * MINUTES_TO_NANOSECONDS)}
-                />
+                <label>Interval</label>
+                <select
+                  value={formatIntervalForSelect(formData.interval)}
+                  onChange={(e) => updateFormField('interval', parseIntervalFromSelect(e.target.value))}
+                >
+                  <option value="5m">5 minutes (RSS/GitHub only)</option>
+                  <option value="10m">10 minutes (RSS/GitHub only)</option>
+                  <option value="15m">15 minutes (Safe for most APIs)</option>
+                  <option value="30m">30 minutes</option>
+                  <option value="1h">1 hour (Recommended for Weather)</option>
+                  <option value="2h">2 hours</option>
+                  <option value="4h">4 hours (Recommended for Jobs)</option>
+                  <option value="6h">6 hours</option>
+                  <option value="12h">12 hours</option>
+                  <option value="24h">24 hours</option>
+                </select>
+                <small className="form-hint">How often to check for new events</small>
               </div>
 
               <div className="form-group">
